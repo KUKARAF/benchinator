@@ -350,7 +350,8 @@ fn generate_bar_chart(_run_type: &str) -> Result<(), Box<dyn std::error::Error>>
     let chart = Chart::new()
         .set_width(800)
         .set_height(600)
-        .set_margins(90, 40, 50, 60);
+        .set_margins(90, 40, 50, 60)
+        .set_background_color("#FFFFFF");
 
     chart.add_title("Benchmark Comparison: Security Off vs On".to_string())
         .add_view(&view)
