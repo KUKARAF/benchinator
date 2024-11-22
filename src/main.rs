@@ -21,7 +21,7 @@ fn ensure_config_and_artifacts() -> Result<(), Box<dyn std::error::Error>> {
         fs::write("config.toml", 
             "# Configuration file\n\
             [download]\n\
-            url = \"https://example.com/file.zip\"\n\
+            url = \"https://testing.taxi/wp-content/uploads/2023/06/compressed-txt-100M.zip\"\n\
             output = \"downloaded_file.zip\"\n\
             \n\
             [git]\n\
