@@ -26,25 +26,29 @@ impl FileOperations {
         
         // Measure write operation
         let write_start = std::time::Instant::now();
-        self.write_random_file(temp_file, file_size)?;
+        self.write_random_file(temp_file, file_size)
+            .map_err(|e| format!("Write operation failed: {}", e))?;
         let write_time = write_start.elapsed().as_millis();
         println!("Write operation completed in {} ms", write_time);
 
         // Measure read operation
         let read_start = std::time::Instant::now();
-        self.read_file(temp_file)?;
+        self.read_file(temp_file)
+            .map_err(|e| format!("Read operation failed: {}", e))?;
         let read_time = read_start.elapsed().as_millis();
         println!("Read operation completed in {} ms", read_time);
 
         // Measure RAM load operation
         let ram_load_start = std::time::Instant::now();
-        let data = self.load_to_ram(temp_file)?;
+        let data = self.load_to_ram(temp_file)
+            .map_err(|e| format!("RAM load operation failed: {}", e))?;
         let ram_load_time = ram_load_start.elapsed().as_millis();
         println!("RAM load operation completed in {} ms", ram_load_time);
 
         // Measure disk hash calculation
         let disk_hash_start = std::time::Instant::now();
-        let disk_hash = self.calculate_file_hash(temp_file)?;
+        let disk_hash = self.calculate_file_hash(temp_file)
+            .map_err(|e| format!("Disk hash calculation failed: {}", e))?;
         let disk_hash_time = disk_hash_start.elapsed().as_millis();
         println!("File hash from disk: {} (completed in {} ms)", disk_hash, disk_hash_time);
 
@@ -55,7 +59,8 @@ impl FileOperations {
         println!("File hash from RAM: {} (completed in {} ms)", ram_hash, ram_hash_time);
 
         // Clean up
-        fs::remove_file(temp_file)?;
+        fs::remove_file(temp_file)
+            .map_err(|e| format!("Failed to remove temporary file: {}", e))?;
 
         Ok(FileOperationResults {
             write_time,
