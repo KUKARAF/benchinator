@@ -28,7 +28,8 @@ fn ensure_config_and_artifacts() -> Result<(), Box<dyn std::error::Error>> {
             files_count = 50\n\
             \n\
             [docker]\n\
-            image = \"af2.corpo.t-mobile.pl/cindy-base-images/python:3.9.7-slim-buster\"\n")?;
+            image = \"af2.corpo.t-mobile.pl/cindy-base-images/python:3.9.7-slim-buster\"\n\
+            test_command = [\"python\", \"--version\"]\n")?;
         println!("Created config.toml with default settings.");
     }
 

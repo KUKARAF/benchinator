@@ -33,9 +33,22 @@ impl DockerOperations {
             return Err(String::from_utf8_lossy(&pull_output.stderr).into_owned());
         }
 
-        // Run a simple test with the image
+        // Get test command from config
+        let test_command = self.config["docker"]["test_command"]
+            .as_array()
+            .ok_or_else(|| "Docker test_command not found in config".to_string())?;
+        
+        let test_args: Vec<&str> = test_command
+            .iter()
+            .map(|v| v.as_str().unwrap_or_default())
+            .collect();
+
+        // Run test with the image
+        let mut docker_args = vec!["run", "--rm", image];
+        docker_args.extend(test_args.iter());
+
         let run_output = Command::new("docker")
-            .args(&["run", "--rm", image, "python", "--version"])
+            .args(&docker_args)
             .output()
             .map_err(|e| format!("Failed to run docker container: {}", e))?;
 
