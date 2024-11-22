@@ -18,9 +18,15 @@ impl DockerOperations {
     pub fn perform_operation(&self) -> Result<(), String> {
         println!("Performing docker operation...");
         
+        // Debug print the config
+        println!("Config contents: {:#?}", self.config);
+        
         // Get image from config
-        let image = self.config["docker"]["image"]
-            .as_str()
+        let docker_section = self.config.get("docker")
+            .ok_or_else(|| "Docker section not found in config".to_string())?;
+            
+        let image = docker_section.get("image")
+            .and_then(|v| v.as_str())
             .ok_or_else(|| "Docker image not found in config".to_string())?;
 
         // Pull the image
@@ -34,8 +40,8 @@ impl DockerOperations {
         }
 
         // Get test command from config
-        let test_command = self.config["docker"]["test_command"]
-            .as_array()
+        let test_command = docker_section.get("test_command")
+            .and_then(|v| v.as_array())
             .ok_or_else(|| "Docker test_command not found in config".to_string())?;
         
         let test_args: Vec<&str> = test_command
