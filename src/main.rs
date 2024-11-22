@@ -222,12 +222,16 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
     // Write header
     csv_writer.write_row(&["Operation", "Average Time (ms)"])?;
 
-    // Write averages
+    // Write averages and calculate total
+    let mut total_average = 0.0;
     for (operation, (sum, count)) in operation_totals {
         let average = if count > 0 { sum / count as f64 } else { 0.0 };
         csv_writer.write_row(&[&operation, &average.to_string()])?;
+        total_average += average;
     }
 
+    // Write total in all caps
+    csv_writer.write_row(&["TOTAL", &total_average.to_string()])?;
     csv_writer.flush()?;
     println!("Updated averages written to {}", avg_file_path);
     
