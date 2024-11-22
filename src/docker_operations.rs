@@ -16,6 +16,9 @@ impl DockerOperations {
     }
 
     pub fn perform_operation(&self) -> Result<(), String> {
+        // Clean up any existing images first
+        self.cleanup()?;
+        
         println!("Performing docker operation...");
         
         // Debug print the config
@@ -63,6 +66,37 @@ impl DockerOperations {
         }
 
         println!("Docker test completed successfully");
+        
+        // Cleanup after test
+        self.cleanup()?;
+        
+        Ok(())
+    }
+
+    fn cleanup(&self) -> Result<(), String> {
+        println!("Cleaning up Docker resources...");
+        
+        // Get image from config
+        let docker_section = self.config.get("docker")
+            .ok_or_else(|| "Docker section not found in config".to_string())?;
+            
+        let image = docker_section.get("image")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| "Docker image not found in config".to_string())?;
+
+        // Remove the specific image if it exists
+        Command::new("docker")
+            .args(&["rmi", "-f", image])
+            .output()
+            .map_err(|e| format!("Failed to remove docker image: {}", e))?;
+
+        // Additional cleanup with system prune
+        Command::new("docker")
+            .args(&["system", "prune", "-f"])
+            .output()
+            .map_err(|e| format!("Failed to prune docker system: {}", e))?;
+
+        println!("Docker cleanup completed");
         Ok(())
     }
 }

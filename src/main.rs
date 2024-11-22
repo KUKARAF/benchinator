@@ -13,9 +13,10 @@ use download_operations::DownloadOperations;
 use build_run_operations::BuildRunOperations;
 use std::time::Instant;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use chrono::Local;
 
-fn ensure_config_and_artifacts() -> Result<(), Box<dyn std::error::Error>> {
+fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
     if !Path::new("config.toml").exists() {
         fs::write("config.toml", 
@@ -33,10 +34,12 @@ fn ensure_config_and_artifacts() -> Result<(), Box<dyn std::error::Error>> {
         println!("Created config.toml with default settings.");
     }
 
-    // Ensure artifacts folder exists
-    if !Path::new("artifacts").exists() {
-        fs::create_dir("artifacts")?;
-        println!("Created artifacts folder.");
+    // Ensure artifacts and runs folders exist
+    for dir in &["artifacts", "runs"] {
+        if !Path::new(dir).exists() {
+            fs::create_dir(dir)?;
+            println!("Created {} folder.", dir);
+        }
     }
 
     Ok(())
@@ -46,8 +49,8 @@ fn ensure_config_and_artifacts() -> Result<(), Box<dyn std::error::Error>> {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting benchmarks...");
 
-    // Ensure config and artifacts exist
-    ensure_config_and_artifacts()?;
+    // Ensure config, artifacts, and runs directories exist
+    ensure_config_and_directories()?;
 
     let file_ops = FileOperations::new();
     let git_ops = GitOperations::new().map_err(|e| e.to_string())?;
@@ -119,7 +122,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Build and Run Operation: {} ms", build_run_op_time);
     println!("Average Time: {} ms", average_time);
 
-    println!("Benchmarks completed. Results written to benchmark_results.csv");
+    println!("Benchmarks completed. Moving results to runs directory...");
+    
+    // Move results file to runs directory with timestamp
+    let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
+    let new_filename = format!("runs/{}.csv", timestamp);
+    fs::rename("artifacts/benchmark_results.csv", &new_filename)?;
+    
+    // Cleanup
+    println!("Cleaning up...");
+    if Path::new("artifacts").exists() {
+        fs::remove_dir_all("artifacts")?;
+        println!("Artifacts directory cleaned up.");
+    }
+    
+    println!("Results written to {}", new_filename);
     Ok(())
 }
 
