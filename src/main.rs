@@ -17,7 +17,7 @@ use std::path::Path;
 use std::collections::HashMap;
 use chrono::Local;
 use toml::Value;
-use rustplotlib::Figure;
+use charts::{Chart, VerticalBarView, ScaleBand, ScaleLinear, Color};
 
 fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
@@ -268,19 +268,42 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
     let x_values: Vec<f64> = (0..operations.len()).map(|i| i as f64).collect();
     let y_values: Vec<f64> = times.iter().copied().collect();
 
-    // Create the bar chart
-    let mut figure = Figure::new();
-    
-    // Add bars one by one
-    for (i, (x, y)) in x_values.iter().zip(y_values.iter()).enumerate() {
-        figure.add_bars(&[*x], &[*y]);
-        // Add operation label
-        figure.add_text(*x, 0.0, operations[i].clone());
-    }
-    
-    // Save the chart
+    // Create scales for the chart
+    let x = ScaleBand::new()
+        .set_domain(operations.iter().map(|s| s.to_string()).collect())
+        .set_range(vec![0, 800 - 60 - 40])
+        .set_inner_padding(0.1)
+        .set_outer_padding(0.1);
+
+    let y = ScaleLinear::new()
+        .set_domain(vec![0, *y_values.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()])
+        .set_range(vec![600 - 90 - 50, 0]);
+
+    // Create the data vector
+    let data: Vec<(&str, f64)> = operations.iter()
+        .zip(y_values.iter())
+        .map(|(op, &val)| (op.as_str(), val))
+        .collect();
+
+    // Create bar view
+    let view = VerticalBarView::new()
+        .set_x_scale(&x)
+        .set_y_scale(&y)
+        .load_data(&data)?;
+
+    // Generate and save the chart
     let chart_path = format!("runs/benchmark_chart_{}.svg", run_type);
-    figure.save_svg(&chart_path)?;
+    Chart::new()
+        .set_width(800)
+        .set_height(600)
+        .set_margins(90, 40, 50, 60)
+        .add_title(format!("Benchmark Results - {}", run_type))
+        .add_view(&view)
+        .add_axis_bottom(&x)
+        .add_axis_left(&y)
+        .add_left_axis_label("Time (ms)")
+        .add_bottom_axis_label("Operations")
+        .save(&chart_path)?;
     println!("Bar chart saved to {}", chart_path);
 
     Ok(())
