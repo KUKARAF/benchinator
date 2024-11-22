@@ -10,13 +10,7 @@ impl GitOperations {
         println!("Performing git operation...");
         std::thread::sleep(std::time::Duration::from_millis(200));
     }
-}
 
-impl GitOperations {
-    pub fn new() -> Self {
-        GitOperations
-    }
-
-    // TODO: Implement methods for git operations
+    // TODO: Implement additional methods for git operations
 }
 

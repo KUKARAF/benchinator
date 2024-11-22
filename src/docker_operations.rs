@@ -10,13 +10,7 @@ impl DockerOperations {
         println!("Performing docker operation...");
         std::thread::sleep(std::time::Duration::from_millis(300));
     }
-}
 
-impl DockerOperations {
-    pub fn new() -> Self {
-        DockerOperations
-    }
-
-    // TODO: Implement methods for docker operations
+    // TODO: Implement additional methods for docker operations
 }
 
