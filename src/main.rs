@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let git_op_time = benchmark(|| git_ops.perform_operation())?;
     docker_ops.perform_operation()?; // Docker system prune
     let docker_op_time = benchmark(|| docker_ops.perform_operation())?;
-    let download_op_time = benchmark(|| download_ops.perform_operation())?;
+    let download_op_time = benchmark(|| async { download_ops.perform_operation().await }).await?;
     let build_run_op_time = benchmark(|| build_run_ops.perform_operation())?;
 
     // Write results to CSV
@@ -57,12 +57,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn benchmark<F, T>(f: F) -> Result<u128, String>
+async fn benchmark<F, Fut, T>(f: F) -> Result<u128, String>
 where
-    F: FnOnce() -> Result<T, String>,
+    F: FnOnce() -> Fut,
+    Fut: std::future::Future<Output = Result<T, String>>,
 {
     let start = Instant::now();
-    f()?;
+    f().await?;
     Ok(start.elapsed().as_millis())
 }
 
