@@ -340,8 +340,8 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
         .set_x_scale(&x)
         .set_y_scale(&y)
         .set_colors(vec![
-            Color::new(65.0/255.0, 105.0/255.0, 225.0/255.0),  // Royal Blue
-            Color::new(220.0/255.0, 20.0/255.0, 60.0/255.0),   // Crimson Red
+            Color::from_vec_of_hex_strings(vec!["#4169E1"])[0],  // Royal Blue
+            Color::from_vec_of_hex_strings(vec!["#DC143C"])[0],  // Crimson Red
         ])
         .load_data(&chart_data)?;
 
