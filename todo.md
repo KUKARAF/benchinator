@@ -2,8 +2,8 @@ A system benchmarking tool built in Rust that measures and compares various syst
 
 Core Features:
 - File Operations:
-  * Write/Read 500MB random file
-  * Load/Read 500MB to/from RAM
+  * Write/Read 500MB(default) random file
+  * Load/Read 500MB(default) to/from RAM
   * Calculate file hash (both from disk and RAM)
 - Git Operations:
   * Repository initialization and commit
@@ -15,13 +15,11 @@ Core Features:
   * Start a Python Django application
   * Include Docker system prune between operations
 - Results Processing:
-  * Export results to CSV
+  * Export all results to CSV
   * Calculate average times per operation type
   * Track individual test times
 
 Note: Since this is a command-line tool running directly on the system, the UI will focus on clear, formatted console output with:
-- Progress indicators for long-running operations
-- Color-coded success/failure states
 - Clean tabular output for results display
 
-Important: This tool requires Git to be pre-installed on the system. Since Docker operations cannot be performed on Replit, those specific benchmarks should be made optional or replaced with equivalent operations that can run in the Replit environment.
+Important: This tool requires Git and Docker to be pre-installed on the system. If not present then these particular tests should be skipped with a warning
