@@ -278,7 +278,7 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
     Ok(())
 }
 
-fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn generate_bar_chart(_run_type: &str) -> Result<(), Box<dyn std::error::Error>> {
     let run_types = ["security_off", "security_on"];
     let mut operations: Vec<String> = Vec::new();
     let mut run_data: HashMap<String, Vec<f32>> = HashMap::new();
@@ -340,14 +340,14 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
         .set_x_scale(&x)
         .set_y_scale(&y)
         .set_colors(vec![
-            Color::from_vec_of_hex_strings(vec!["#4169E1"])[0],  // Royal Blue
-            Color::from_vec_of_hex_strings(vec!["#DC143C"])[0],  // Crimson Red
+            Color::from_vec_of_hex_strings(vec!["#4169E1"]).into_iter().next().unwrap(),  // Royal Blue
+            Color::from_vec_of_hex_strings(vec!["#DC143C"]).into_iter().next().unwrap(),  // Crimson Red
         ])
         .load_data(&chart_data)?;
 
     // Generate chart
     let chart_path = "runs/benchmark_comparison.svg";
-    let mut chart = Chart::new()
+    let chart = Chart::new()
         .set_width(800)
         .set_height(600)
         .set_margins(90, 40, 50, 60);
