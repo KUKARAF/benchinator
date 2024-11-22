@@ -14,6 +14,7 @@ use build_run_operations::BuildRunOperations;
 use std::time::Instant;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::collections::HashMap;
 use chrono::Local;
 use toml::Value;
 
@@ -176,6 +177,60 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     
     println!("Results written to {}", new_filename);
+
+    // Calculate and update averages for this run type
+    update_run_type_averages(run_name)?;
+
+    Ok(())
+}
+
+// Function to update averages for a specific run type
+fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let runs_dir = Path::new("runs");
+    let mut operation_totals: HashMap<String, (f64, u32)> = HashMap::new(); // (sum, count)
+
+    // Read all CSV files for this run type
+    for entry in fs::read_dir(runs_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        if path.is_file() && 
+           path.extension().map_or(false, |ext| ext == "csv") &&
+           path.file_name().unwrap().to_string_lossy().contains(run_type) {
+            
+            let content = fs::read_to_string(&path)?;
+            for line in content.lines().skip(1) { // Skip header
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() == 2 {
+                    let operation = parts[0].trim().to_string();
+                    if let Ok(time) = parts[1].trim().parse::<f64>() {
+                        let (sum, count) = operation_totals
+                            .entry(operation)
+                            .or_insert((0.0, 0));
+                        *sum += time;
+                        *count += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    // Calculate averages and write to avg_<run_type>.csv
+    let avg_file_path = format!("avg_{}.csv", run_type);
+    let mut csv_writer = CsvWriter::new(&avg_file_path)?;
+    
+    // Write header
+    csv_writer.write_row(&["Operation", "Average Time (ms)"])?;
+
+    // Write averages
+    for (operation, (sum, count)) in operation_totals {
+        let average = if count > 0 { sum / count as f64 } else { 0.0 };
+        csv_writer.write_row(&[&operation, &average.to_string()])?;
+    }
+
+    csv_writer.flush()?;
+    println!("Updated averages written to {}", avg_file_path);
+    
     Ok(())
 }
 
