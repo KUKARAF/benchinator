@@ -268,95 +268,89 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
     Ok(())
 }
 
-// Function to generate a stacked bar chart for the benchmark results
-use charts::{Chart, Color, ScaleBand, ScaleLinear, VerticalBarView};
-
-fn generate_comparison_chart(run_types: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
+fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let run_types = ["security_off", "security_on"];
     let mut operations: Vec<String> = Vec::new();
-    let mut run_type_times: HashMap<String, Vec<f32>> = HashMap::new();
+    let mut run_data: HashMap<String, Vec<f32>> = HashMap::new();
 
-    for &run_type in run_types {
-        let avg_file_path = format!("avg_{}.csv", run_type);
-        let content = fs::read_to_string(&avg_file_path)?;
-        let mut times: Vec<f32> = Vec::new();
-
-        // Skip header and read data
-        for line in content.lines().skip(1) {
-            let parts: Vec<&str> = line.split(',').collect();
-            if parts.len() == 2 {
-                let operation = parts[0].trim().to_string();
-                if let Ok(time) = parts[1].trim().parse::<f32>() {
-                    // Skip the TOTAL row
-                    if operation != "TOTAL" {
-                        if !operations.contains(&operation) {
-                            operations.push(operation.clone());
+    // Read data from avg_*.csv files
+    for &rt in &run_types {
+        let avg_file = format!("avg_{}.csv", rt);
+        if let Ok(content) = fs::read_to_string(&avg_file) {
+            let mut times = Vec::new();
+            for line in content.lines().skip(1) {  // Skip header
+                let parts: Vec<&str> = line.split(',').collect();
+                if parts.len() == 2 {
+                    let operation = parts[0].trim();
+                    if operation != "TOTAL" {  // Skip total row
+                        if let Ok(time) = parts[1].trim().parse::<f32>() {
+                            if !operations.contains(&operation.to_string()) {
+                                operations.push(operation.to_string());
+                            }
+                            times.push(time);
                         }
-                        times.push(time);
                     }
                 }
             }
+            run_data.insert(rt.to_string(), times);
         }
-        run_type_times.insert(run_type.to_string(), times);
     }
 
-    // Create x and y values
-    let x_values: Vec<f32> = (0..operations.len()).map(|i| i as f32).collect();
-
-    // Create scales for the chart
-    let x = ScaleBand::new()
-        .set_domain(operations.iter().map(|s| s.to_string()).collect())
-        .set_range(vec![0, 800 - 60 - 40])
-        .set_inner_padding(0.1)
-        .set_outer_padding(0.1);
-
-    let max_y_value = run_type_times
-        .values()
-        .flat_map(|v| v.iter())
-        .cloned()
-        .fold(0.0, f32::max);
-    let y = ScaleLinear::new()
-        .set_domain(vec![0.0, max_y_value])
-        .set_range(vec![600 - 90 - 50, 0]);
-
-    // Create the data vector
-    let mut data: Vec<(&str, Vec<f32>)> = Vec::new();
-    for (i, operation) in operations.iter().enumerate() {
-        let mut times: Vec<f32> = Vec::new();
-        for &run_type in run_types {
-            if let Some(run_times) = run_type_times.get(run_type) {
-                if let Some(&time) = run_times.get(i) {
-                    times.push(time);
-                } else {
-                    times.push(0.0);
+    // Prepare data for chart
+    let mut chart_data: Vec<(&str, Vec<f32>)> = Vec::new();
+    for op in &operations {
+        let mut times = Vec::new();
+        for rt in &run_types {
+            if let Some(rt_times) = run_data.get(*rt) {
+                if let Some(time) = rt_times.get(operations.iter().position(|x| x == op).unwrap()) {
+                    times.push(*time);
                 }
             }
         }
-        data.push((operation.as_str(), times));
+        chart_data.push((op, times));
     }
 
-    // Create bar view
+    // Create scales
+    let x = ScaleBand::new()
+        .set_domain(operations.iter().map(|s| s.to_string()).collect())
+        .set_range(vec![0, 800 - 60 - 40])
+        .set_inner_padding(0.2)
+        .set_outer_padding(0.1);
+
+    let max_time = run_data.values()
+        .flat_map(|v| v.iter())
+        .fold(0.0f32, |a, &b| a.max(b));
+
+    let y = ScaleLinear::new()
+        .set_domain(vec![0.0, max_time])
+        .set_range(vec![600 - 90 - 50, 0]);
+
+    // Create bar view with colors
     let view = VerticalBarView::new()
         .set_x_scale(&x)
         .set_y_scale(&y)
-        .set_colors(vec![Color::new(0, 0, 255, 1.0), Color::new(255, 0, 0, 1.0)]) // Blue and Red colors for bars
-        .load_data(&data)?;
+        .set_colors(vec![
+            Color::new(65, 105, 225, 1.0),  // Royal Blue
+            Color::new(220, 20, 60, 1.0),   // Crimson Red
+        ])
+        .load_data(&chart_data)?;
 
-    // Generate and save the chart
-    let chart_path = "runs/benchmark_comparison_chart.svg";
+    // Generate chart
+    let chart_path = "runs/benchmark_comparison.svg";
     Chart::new()
         .set_width(800)
         .set_height(600)
         .set_margins(90, 40, 50, 60)
-        .set_background_color(Color::new(255, 255, 255, 1.0)) // White background
-        .add_title("Benchmark Results Comparison")
+        .set_background_color(Color::new(255, 255, 255, 1.0))  // White background
+        .add_title("Benchmark Comparison: Security Off vs On")
         .add_view(&view)
         .add_axis_bottom(&x)
         .add_axis_left(&y)
         .add_left_axis_label("Time (ms)")
         .add_bottom_axis_label("Operations")
-        .save(&chart_path)?;
-    println!("Comparison bar chart saved to {}", chart_path);
+        .save(chart_path)?;
 
+    println!("Comparison chart saved to {}", chart_path);
     Ok(())
 }
 #[tokio::main]
