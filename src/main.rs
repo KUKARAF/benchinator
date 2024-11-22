@@ -20,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file_ops = FileOperations::new();
     let git_ops = GitOperations::new();
     let docker_ops = DockerOperations::new();
-    let download_ops = DownloadOperations::new();
+    let download_ops = DownloadOperations::new().map_err(|e| e.to_string())?;
     let build_run_ops = BuildRunOperations::new();
     let mut csv_writer = CsvWriter::new("benchmark_results.csv")?;
 
