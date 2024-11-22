@@ -45,26 +45,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let build_run_ops = BuildRunOperations::new();
     let mut csv_writer = CsvWriter::new("artifacts/benchmark_results.csv")?;
 
-    // Implement benchmark tests
+    // Write header to CSV
+    csv_writer.write_row(&["Operation", "Time (ms)"])?;
+
+    // Implement benchmark tests and write results immediately
     let file_op_time = benchmark(|| async { file_ops.perform_operation().map_err(|e| e.to_string()) }).await?;
+    csv_writer.write_row(&["File Operation", &file_op_time.to_string()])?;
+
     let git_op_time = benchmark(|| async { git_ops.perform_operation() }).await?;
+    csv_writer.write_row(&["Git Operation", &git_op_time.to_string()])?;
+
     docker_ops.perform_operation()?; // Docker system prune
     let docker_op_time = benchmark(|| async { docker_ops.perform_operation() }).await?;
-    let download_op_time = benchmark(|| async { download_ops.perform_operation().await }).await?;
-    let build_run_op_time = benchmark(|| async { build_run_ops.perform_operation() }).await?;
-
-    // Write results to CSV
-    csv_writer.write_row(&["Operation", "Time (ms)"])?;
-    csv_writer.write_row(&["File Operation", &file_op_time.to_string()])?;
-    csv_writer.write_row(&["Git Operation", &git_op_time.to_string()])?;
     csv_writer.write_row(&["Docker Operation", &docker_op_time.to_string()])?;
+
+    let download_op_time = benchmark(|| async { download_ops.perform_operation().await }).await?;
     csv_writer.write_row(&["Download Operation", &download_op_time.to_string()])?;
+
+    let build_run_op_time = benchmark(|| async { build_run_ops.perform_operation() }).await?;
     csv_writer.write_row(&["Build and Run Operation", &build_run_op_time.to_string()])?;
 
     // Calculate average times
     let total_time = file_op_time + git_op_time + docker_op_time + download_op_time + build_run_op_time;
     let average_time = total_time / 5;
     csv_writer.write_row(&["Average Time", &average_time.to_string()])?;
+
+    // Ensure all data is written to the file
+    csv_writer.flush()?;
 
     // Print results to console
     println!("File Operation: {} ms", file_op_time);
