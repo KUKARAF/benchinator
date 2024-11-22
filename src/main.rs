@@ -15,6 +15,7 @@ use std::time::Instant;
 use std::fs;
 use std::path::{Path, PathBuf};
 use chrono::Local;
+use toml::Value;
 
 fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
@@ -30,7 +31,10 @@ fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
             \n\
             [docker]\n\
             image = \"af2.corpo.t-mobile.pl/cindy-base-images/python:3.9.7-slim-buster\"\n\
-            test_command = [\"python\", \"--version\"]\n")?;
+            test_command = [\"python\", \"--version\"]\n\
+            \n\
+            [runs]\n\
+            names = [\"security_off\", \"security_on\"]\n")?;
         println!("Created config.toml with default settings.");
     }
 
@@ -124,9 +128,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Benchmarks completed. Moving results to runs directory...");
     
-    // Move results file to runs directory with timestamp
+    // Read config to get run names
+    let config_str = fs::read_to_string("config.toml")?;
+    let config: Value = toml::from_str(&config_str)
+        .map_err(|e| Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+    
+    let run_names = config.get("runs")
+        .and_then(|r| r.get("names"))
+        .and_then(|n| n.as_array())
+        .ok_or_else(|| "Run names not found in config")?;
+
+    // Get first run name or use default
+    let run_name = run_names.get(0)
+        .and_then(|n| n.as_str())
+        .unwrap_or("default");
+
+    // Move results file to runs directory with timestamp and run name
     let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
-    let new_filename = format!("runs/{}.csv", timestamp);
+    let new_filename = format!("runs/{}_{}.csv", timestamp, run_name);
     fs::rename("artifacts/benchmark_results.csv", &new_filename)?;
     
     // Cleanup
