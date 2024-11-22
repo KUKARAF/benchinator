@@ -3,19 +3,19 @@ use std::fs::{self, File};
 use rand::Rng;
 use sha2::{Sha256, Digest};
 
+pub struct FileOperationResults {
+    pub write_time: u128,
+    pub read_time: u128,
+    pub ram_load_time: u128,
+    pub disk_hash_time: u128,
+    pub ram_hash_time: u128,
+}
+
 pub struct FileOperations;
 
 impl FileOperations {
     pub fn new() -> Self {
         FileOperations
-    }
-
-    pub struct FileOperationResults {
-        pub write_time: u128,
-        pub read_time: u128,
-        pub ram_load_time: u128,
-        pub disk_hash_time: u128,
-        pub ram_hash_time: u128,
     }
 
     pub fn perform_operation(&self) -> io::Result<FileOperationResults> {
