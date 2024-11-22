@@ -145,22 +145,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(String::from)
         .collect();
 
-    // Show dialog with run options
-    let options_str = run_options.join("\n");
-    let msg = format!("Select a run type by entering its number:\n\n{}", 
-        run_options.iter().enumerate()
-            .map(|(i, name)| format!("{}. {}", i + 1, name))
-            .collect::<Vec<_>>()
-            .join("\n"));
-
-    MessageDialog::new()
-        .set_type(MessageType::Info)
-        .set_title("Select Run Type")
-        .set_text(&msg)
-        .show_alert()?;
-
-    // For now use terminal input since native-dialog doesn't have list selection
-    println!("\n{}", msg);
+    // Show run options in terminal
+    println!("\nSelect a run type by entering its number:");
+    for (i, name) in run_options.iter().enumerate() {
+        println!("{}. {}", i + 1, name);
+    }
     print!("\nEnter selection (1-{}): ", run_options.len());
     std::io::Write::flush(&mut std::io::stdout())?;
     
