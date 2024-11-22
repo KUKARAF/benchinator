@@ -17,6 +17,8 @@ use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use chrono::Local;
 use toml::Value;
+use rustplotlib::Figure;
+use rustplotlib::plots::{Bar, Plot};
 
 fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
@@ -181,6 +183,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Calculate and update averages for this run type
     update_run_type_averages(run_name)?;
 
+    // Generate and save the stacked bar chart
+    generate_bar_chart(run_name)?;
+
     Ok(())
 }
 
@@ -235,6 +240,47 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
     csv_writer.flush()?;
     println!("Updated averages written to {}", avg_file_path);
     
+    Ok(())
+}
+
+// Function to generate a stacked bar chart for the benchmark results
+fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let avg_file_path = format!("avg_{}.csv", run_type);
+    let content = fs::read_to_string(&avg_file_path)?;
+    let mut operations: Vec<String> = Vec::new();
+    let mut times: Vec<f64> = Vec::new();
+
+    // Skip header and read data
+    for line in content.lines().skip(1) {
+        let parts: Vec<&str> = line.split(',').collect();
+        if parts.len() == 2 {
+            let operation = parts[0].trim().to_string();
+            if let Ok(time) = parts[1].trim().parse::<f64>() {
+                // Skip the TOTAL row
+                if operation != "TOTAL" {
+                    operations.push(operation);
+                    times.push(time);
+                }
+            }
+        }
+    }
+
+    // Create the bar chart
+    let mut figure = Figure::new();
+    
+    // Create bars for each operation
+    for (i, (op, time)) in operations.iter().zip(times.iter()).enumerate() {
+        let bar = Bar::new(vec![*time])
+            .label(op)
+            .position(i as f64);
+        figure.add_plot(Plot::new(bar));
+    }
+
+    // Save the chart
+    let chart_path = format!("runs/benchmark_chart_{}.svg", run_type);
+    figure.save(&chart_path)?;
+    println!("Bar chart saved to {}", chart_path);
+
     Ok(())
 }
 
