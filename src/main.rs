@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let file_ops = FileOperations::new();
     let git_ops = GitOperations::new();
     let docker_ops = DockerOperations::new();
-    let mut csv_writer = CsvWriter::new("benchmark_results.csv");
+    let mut csv_writer = CsvWriter::new("benchmark_results.csv")?;
 
     // Implement basic benchmark tests
     let file_op_time = benchmark(|| file_ops.perform_operation());

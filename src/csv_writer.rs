@@ -1,5 +1,8 @@
+use std::fs::File;
+use std::io::{self, Write};
+
 pub struct CsvWriter {
-    file_path: String,
+    file: File,
 }
 
 impl CsvWriter {
