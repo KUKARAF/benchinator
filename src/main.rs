@@ -13,7 +13,7 @@ use download_operations::DownloadOperations;
 use build_run_operations::BuildRunOperations;
 use std::time::Instant;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::collections::HashMap;
 use chrono::Local;
 use toml::Value;
@@ -270,11 +270,17 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
 
     // Create the bar chart
     let mut figure = Figure::new();
-    figure.add_data(&x_values, &y_values);
+    
+    // Add bars one by one
+    for (i, (x, y)) in x_values.iter().zip(y_values.iter()).enumerate() {
+        figure.add_bars(&[*x], &[*y]);
+        // Add operation label
+        figure.add_text(*x, 0.0, operations[i].clone());
+    }
     
     // Save the chart
     let chart_path = format!("runs/benchmark_chart_{}.svg", run_type);
-    figure.render(&chart_path)?;
+    figure.save_svg(&chart_path)?;
     println!("Bar chart saved to {}", chart_path);
 
     Ok(())
