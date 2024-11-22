@@ -25,12 +25,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut csv_writer = CsvWriter::new("benchmark_results.csv")?;
 
     // Implement benchmark tests
-    let file_op_time = benchmark(|| file_ops.perform_operation().map_err(|e| e.to_string()))?;
-    let git_op_time = benchmark(|| git_ops.perform_operation())?;
+    let file_op_time = benchmark(|| async { file_ops.perform_operation().map_err(|e| e.to_string()) }).await?;
+    let git_op_time = benchmark(|| async { git_ops.perform_operation() }).await?;
     docker_ops.perform_operation()?; // Docker system prune
-    let docker_op_time = benchmark(|| docker_ops.perform_operation())?;
+    let docker_op_time = benchmark(|| async { docker_ops.perform_operation() }).await?;
     let download_op_time = benchmark(|| async { download_ops.perform_operation().await }).await?;
-    let build_run_op_time = benchmark(|| build_run_ops.perform_operation())?;
+    let build_run_op_time = benchmark(|| async { build_run_ops.perform_operation() }).await?;
 
     // Write results to CSV
     csv_writer.write_row(&["Operation", "Time (ms)"])?;

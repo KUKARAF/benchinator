@@ -4,12 +4,12 @@ use tokio::io::AsyncWriteExt;
 use serde::Deserialize;
 use std::path::Path;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct Config {
     download: DownloadConfig,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct DownloadConfig {
     url: String,
     output: String,
