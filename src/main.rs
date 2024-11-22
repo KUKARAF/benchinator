@@ -17,7 +17,7 @@ use std::path::Path;
 use std::collections::HashMap;
 use chrono::Local;
 use toml::Value;
-use charts::{Chart, VerticalBarView, ScaleBand, ScaleLinear, Color};
+use charts::{Chart, VerticalBarView, ScaleBand, ScaleLinear};
 
 fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
@@ -247,14 +247,14 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
     let avg_file_path = format!("avg_{}.csv", run_type);
     let content = fs::read_to_string(&avg_file_path)?;
     let mut operations: Vec<String> = Vec::new();
-    let mut times: Vec<f64> = Vec::new();
+    let mut times: Vec<f32> = Vec::new();
 
     // Skip header and read data
     for line in content.lines().skip(1) {
         let parts: Vec<&str> = line.split(',').collect();
         if parts.len() == 2 {
             let operation = parts[0].trim().to_string();
-            if let Ok(time) = parts[1].trim().parse::<f64>() {
+            if let Ok(time) = parts[1].trim().parse::<f32>() {
                 // Skip the TOTAL row
                 if operation != "TOTAL" {
                     operations.push(operation);
@@ -276,11 +276,11 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
         .set_outer_padding(0.1);
 
     let y = ScaleLinear::new()
-        .set_domain(vec![0, *y_values.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()])
+        .set_domain(vec![0.0, *y_values.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()])
         .set_range(vec![600 - 90 - 50, 0]);
 
     // Create the data vector
-    let data: Vec<(&str, f64)> = operations.iter()
+    let data: Vec<(&str, f32)> = operations.iter()
         .zip(y_values.iter())
         .map(|(op, &val)| (op.as_str(), val))
         .collect();
