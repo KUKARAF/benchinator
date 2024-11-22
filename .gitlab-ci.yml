@@ -40,3 +40,4 @@ build-windows:
   only:
     - main
     - merge_requests
+    
