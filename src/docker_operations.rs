@@ -1,3 +1,5 @@
+use std::process::Command;
+
 pub struct DockerOperations;
 
 impl DockerOperations {
@@ -5,12 +7,20 @@ impl DockerOperations {
         DockerOperations
     }
 
-    pub fn perform_operation(&self) {
-        // Simulate a docker operation
+    pub fn perform_operation(&self) -> Result<(), String> {
         println!("Performing docker operation...");
-        std::thread::sleep(std::time::Duration::from_millis(300));
-    }
+        
+        // Check docker version
+        let output = Command::new("docker")
+            .arg("version")
+            .output()
+            .map_err(|e| format!("Failed to execute docker version: {}", e))?;
 
-    // TODO: Implement additional methods for docker operations
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+        }
+
+        Ok(())
+    }
 }
 

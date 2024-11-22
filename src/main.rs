@@ -19,9 +19,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut csv_writer = CsvWriter::new("benchmark_results.csv")?;
 
     // Implement basic benchmark tests
-    let file_op_time = benchmark(|| file_ops.perform_operation());
-    let git_op_time = benchmark(|| git_ops.perform_operation());
-    let docker_op_time = benchmark(|| docker_ops.perform_operation());
+    let file_op_time = benchmark(|| file_ops.perform_operation().map_err(|e| e.to_string()))?;
+    let git_op_time = benchmark(|| git_ops.perform_operation())?;
+    let docker_op_time = benchmark(|| docker_ops.perform_operation())?;
 
     // Write results to CSV
     csv_writer.write_row(&["Operation", "Time (ms)"])?;
@@ -38,12 +38,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn benchmark<F>(f: F) -> u128
+fn benchmark<F, T>(f: F) -> Result<u128, String>
 where
-    F: FnOnce(),
+    F: FnOnce() -> Result<T, String>,
 {
     let start = Instant::now();
-    f();
-    start.elapsed().as_millis()
+    f()?;
+    Ok(start.elapsed().as_millis())
 }
 

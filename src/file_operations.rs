@@ -1,3 +1,6 @@
+use std::fs;
+use std::io;
+
 pub struct FileOperations;
 
 impl FileOperations {
@@ -5,12 +8,20 @@ impl FileOperations {
         FileOperations
     }
 
-    pub fn perform_operation(&self) {
-        // Simulate a file operation
+    pub fn perform_operation(&self) -> io::Result<()> {
         println!("Performing file operation...");
-        std::thread::sleep(std::time::Duration::from_millis(100));
-    }
+        
+        // Create a temporary file
+        let temp_file = "temp_benchmark_file.txt";
+        fs::write(temp_file, "Benchmark test content")?;
 
-    // TODO: Implement additional methods for file operations
+        // Read the file
+        let _content = fs::read_to_string(temp_file)?;
+
+        // Delete the file
+        fs::remove_file(temp_file)?;
+
+        Ok(())
+    }
 }
 

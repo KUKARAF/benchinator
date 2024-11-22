@@ -1,3 +1,5 @@
+use std::process::Command;
+
 pub struct GitOperations;
 
 impl GitOperations {
@@ -5,12 +7,20 @@ impl GitOperations {
         GitOperations
     }
 
-    pub fn perform_operation(&self) {
-        // Simulate a git operation
+    pub fn perform_operation(&self) -> Result<(), String> {
         println!("Performing git operation...");
-        std::thread::sleep(std::time::Duration::from_millis(200));
-    }
+        
+        // Check git status
+        let output = Command::new("git")
+            .arg("status")
+            .output()
+            .map_err(|e| format!("Failed to execute git status: {}", e))?;
 
-    // TODO: Implement additional methods for git operations
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+        }
+
+        Ok(())
+    }
 }
 
