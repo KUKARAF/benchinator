@@ -25,7 +25,10 @@ fn ensure_config_and_artifacts() -> Result<(), Box<dyn std::error::Error>> {
             output = \"downloaded_file.zip\"\n\
             \n\
             [git]\n\
-            files_count = 50\n")?;
+            files_count = 50\n\
+            \n\
+            [docker]\n\
+            image = \"af2.corpo.t-mobile.pl/cindy-base-images/python:3.9.7-slim-buster\"\n")?;
         println!("Created config.toml with default settings.");
     }
 
@@ -47,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let file_ops = FileOperations::new();
     let git_ops = GitOperations::new().map_err(|e| e.to_string())?;
-    let docker_ops = DockerOperations::new();
+    let docker_ops = DockerOperations::new().map_err(|e| e.to_string())?;
     let download_ops = DownloadOperations::new().map_err(|e| e.to_string())?;
     let build_run_ops = BuildRunOperations::new();
     let mut csv_writer = CsvWriter::new("artifacts/benchmark_results.csv")?;
