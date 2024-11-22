@@ -36,7 +36,7 @@ impl DownloadOperations {
             let default_config = Config {
                 download: DownloadConfig {
                     url: "https://testing.taxi/wp-content/uploads/2023/06/compressed-txt-100M.zip".to_string(),
-                    output: "downloaded_file.zip".to_string(),
+                    output: "artifacts/downloaded_file.zip".to_string(),
                 },
             };
             let toml_str = toml::to_string(&default_config)
@@ -56,6 +56,10 @@ impl DownloadOperations {
         let response = reqwest::get(url)
             .await
             .map_err(|e| format!("Failed to GET from {}: {}", url, e))?;
+        // Ensure artifacts directory exists
+        std::fs::create_dir_all("artifacts")
+            .map_err(|e| format!("Failed to create artifacts directory: {}", e))?;
+
         let mut file = File::create(output)
             .await
             .map_err(|e| format!("Failed to create file '{}': {}", output, e))?;
