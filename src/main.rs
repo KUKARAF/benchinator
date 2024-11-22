@@ -191,7 +191,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 // Function to update averages for a specific run type
 fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Error>> {
     let runs_dir = Path::new("runs");
-    let mut operation_totals: HashMap<String, (f64, u32)> = HashMap::new(); // (sum, count)
+    let mut operation_totals: HashMap<String, (f32, u32)> = HashMap::new(); // (sum, count)
 
     // Read all CSV files for this run type
     for entry in fs::read_dir(runs_dir)? {
@@ -207,7 +207,7 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
                 let parts: Vec<&str> = line.split(',').collect();
                 if parts.len() == 2 {
                     let operation = parts[0].trim().to_string();
-                    if let Ok(time) = parts[1].trim().parse::<f64>() {
+                    if let Ok(time) = parts[1].trim().parse::<f32>() {
                         let (sum, count) = operation_totals
                             .entry(operation)
                             .or_insert((0.0, 0));
@@ -227,9 +227,9 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
     csv_writer.write_row(&["Operation", "Average Time (ms)"])?;
 
     // Write averages and calculate total
-    let mut total_average = 0.0;
+    let mut total_average = 0.0f32;
     for (operation, (sum, count)) in operation_totals {
-        let average = if count > 0 { sum / count as f64 } else { 0.0 };
+        let average = if count > 0 { sum / count as f32 } else { 0.0 };
         csv_writer.write_row(&[&operation, &average.to_string()])?;
         total_average += average;
     }
@@ -265,8 +265,8 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
     }
 
     // Create x and y values
-    let x_values: Vec<f64> = (0..operations.len()).map(|i| i as f64).collect();
-    let y_values: Vec<f64> = times.iter().copied().collect();
+    let x_values: Vec<f32> = (0..operations.len()).map(|i| i as f32).collect();
+    let y_values: Vec<f32> = times.iter().copied().collect();
 
     // Create scales for the chart
     let x = ScaleBand::new()
