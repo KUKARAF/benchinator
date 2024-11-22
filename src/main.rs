@@ -18,7 +18,14 @@ use std::path::Path;
 fn ensure_config_and_artifacts() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
     if !Path::new("config.toml").exists() {
-        fs::write("config.toml", "# Configuration file\n[download]\nurl = \"https://example.com/file.zip\"\noutput = \"downloaded_file.zip\"\n")?;
+        fs::write("config.toml", 
+            "# Configuration file\n\
+            [download]\n\
+            url = \"https://example.com/file.zip\"\n\
+            output = \"downloaded_file.zip\"\n\
+            \n\
+            [git]\n\
+            files_count = 50\n")?;
         println!("Created config.toml with default settings.");
     }
 
@@ -39,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ensure_config_and_artifacts()?;
 
     let file_ops = FileOperations::new();
-    let git_ops = GitOperations::new();
+    let git_ops = GitOperations::new().map_err(|e| e.to_string())?;
     let docker_ops = DockerOperations::new();
     let download_ops = DownloadOperations::new().map_err(|e| e.to_string())?;
     let build_run_ops = BuildRunOperations::new();

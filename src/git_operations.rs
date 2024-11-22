@@ -3,12 +3,31 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
 use rand::Rng;
+use serde::Deserialize;
+use std::fs;
+use toml;
 
-pub struct GitOperations;
+#[derive(Deserialize)]
+struct Config {
+    git: GitConfig,
+}
+
+#[derive(Deserialize)]
+struct GitConfig {
+    files_count: usize,
+}
+
+pub struct GitOperations {
+    config: Config,
+}
 
 impl GitOperations {
-    pub fn new() -> Self {
-        GitOperations
+    pub fn new() -> Result<Self, String> {
+        let config_str = fs::read_to_string("config.toml")
+            .map_err(|e| format!("Failed to read config file: {}", e))?;
+        let config: Config = toml::from_str(&config_str)
+            .map_err(|e| format!("Failed to parse config file: {}", e))?;
+        Ok(GitOperations { config })
     }
 
     pub fn perform_operation(&self) -> Result<(), String> {
@@ -20,8 +39,8 @@ impl GitOperations {
         // Initialize a new repository in artifacts directory
         self.init_repo()?;
 
-        // Create and commit 50 random text files
-        self.create_and_commit_files(50)?;
+        // Create and commit files based on config
+        self.create_and_commit_files(self.config.git.files_count)?;
 
         Ok(())
     }
