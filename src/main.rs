@@ -12,10 +12,31 @@ use csv_writer::CsvWriter;
 use download_operations::DownloadOperations;
 use build_run_operations::BuildRunOperations;
 use std::time::Instant;
+use std::fs;
+use std::path::Path;
+
+fn ensure_config_and_artifacts() -> Result<(), Box<dyn std::error::Error>> {
+    // Ensure config.toml exists
+    if !Path::new("config.toml").exists() {
+        fs::write("config.toml", "# Configuration file\n[download]\nurl = \"https://example.com/file.zip\"\noutput = \"downloaded_file.zip\"\n")?;
+        println!("Created config.toml with default settings.");
+    }
+
+    // Ensure artifacts folder exists
+    if !Path::new("artifacts").exists() {
+        fs::create_dir("artifacts")?;
+        println!("Created artifacts folder.");
+    }
+
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting benchmarks...");
+
+    // Ensure config and artifacts exist
+    ensure_config_and_artifacts()?;
 
     let file_ops = FileOperations::new();
     let git_ops = GitOperations::new();
