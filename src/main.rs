@@ -340,8 +340,8 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
         .set_x_scale(&x)
         .set_y_scale(&y)
         .set_colors(vec![
-            Color::new(65, 105, 225, 1.0),  // Royal Blue
-            Color::new(220, 20, 60, 1.0),   // Crimson Red
+            Color::RGB(65, 105, 225),  // Royal Blue
+            Color::RGB(220, 20, 60),   // Crimson Red
         ])
         .load_data(&chart_data)?;
 
@@ -352,7 +352,7 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
         .set_height(600)
         .set_margins(90, 40, 50, 60);
 
-    chart.add_title("Benchmark Comparison: Security Off vs On")
+    chart.add_title("Benchmark Comparison: Security Off vs On".to_string())
         .add_view(&view)
         .add_axis_bottom(&x)
         .add_axis_left(&y)
