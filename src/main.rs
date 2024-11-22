@@ -347,12 +347,12 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
 
     // Generate chart
     let chart_path = "runs/benchmark_comparison.svg";
-    Chart::new()
+    let mut chart = Chart::new()
         .set_width(800)
         .set_height(600)
-        .set_margins(90, 40, 50, 60)
-        .set_background_color(Color::new(255, 255, 255, 1.0))  // White background
-        .add_title("Benchmark Comparison: Security Off vs On")
+        .set_margins(90, 40, 50, 60);
+
+    chart.add_title("Benchmark Comparison: Security Off vs On")
         .add_view(&view)
         .add_axis_bottom(&x)
         .add_axis_left(&y)
@@ -361,21 +361,5 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
         .save(chart_path)?;
 
     println!("Comparison chart saved to {}", chart_path);
-    Ok(())
-}
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    async fn benchmark<F, Fut, T>(f: F) -> Result<u128, String>
-    where
-        F: FnOnce() -> Fut,
-        Fut: std::future::Future<Output = Result<T, String>>,
-    {
-        let start = Instant::now();
-        f().await?;
-        Ok(start.elapsed().as_millis())
-    }
-
-    generate_comparison_chart(&["security_off", "security_on"])?;
-
     Ok(())
 }
