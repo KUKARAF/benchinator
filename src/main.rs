@@ -1,28 +1,29 @@
+mod build_run_operations;
+mod csv_writer;
+mod docker_operations;
+mod download_operations;
 mod file_operations;
 mod git_operations;
-mod docker_operations;
-mod csv_writer;
-mod download_operations;
-mod build_run_operations;
 
+use build_run_operations::BuildRunOperations;
+use charts::{Chart, ScaleBand, ScaleLinear, VerticalBarView};
+use chrono::Local;
+use csv_writer::CsvWriter;
+use docker_operations::DockerOperations;
+use download_operations::DownloadOperations;
 use file_operations::FileOperations;
 use git_operations::GitOperations;
-use docker_operations::DockerOperations;
-use csv_writer::CsvWriter;
-use download_operations::DownloadOperations;
-use build_run_operations::BuildRunOperations;
-use std::time::Instant;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::collections::HashMap;
-use chrono::Local;
+use std::time::Instant;
 use toml::Value;
-use charts::{Chart, VerticalBarView, ScaleBand, ScaleLinear};
 
 fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
     if !Path::new("config.toml").exists() {
-        fs::write("config.toml", 
+        fs::write(
+            "config.toml",
             "# Configuration file\n\
             [download]\n\
             url = \"https://testing.taxi/wp-content/uploads/2023/06/compressed-txt-100M.zip\"\n\
@@ -36,7 +37,8 @@ fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
             test_command = [\"python\", \"--version\"]\n\
             \n\
             [runs]\n\
-            names = [\"security_off\", \"security_on\"]\n")?;
+            names = [\"security_off\", \"security_on\"]\n",
+        )?;
         println!("Created config.toml with default settings.");
     }
 
@@ -73,16 +75,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Implement benchmark tests and write results immediately
     let file_op_results = file_ops.perform_operation()?;
     println!("Writing File Operation results...");
-    csv_writer.write_row(&["File Write Operation", &file_op_results.write_time.to_string()])?;
-    csv_writer.write_row(&["File Read Operation", &file_op_results.read_time.to_string()])?;
-    csv_writer.write_row(&["RAM Load Operation", &file_op_results.ram_load_time.to_string()])?;
-    csv_writer.write_row(&["Disk Hash Operation", &file_op_results.disk_hash_time.to_string()])?;
-    csv_writer.write_row(&["RAM Hash Operation", &file_op_results.ram_hash_time.to_string()])?;
+    csv_writer.write_row(&[
+        "File Write Operation",
+        &file_op_results.write_time.to_string(),
+    ])?;
+    csv_writer.write_row(&[
+        "File Read Operation",
+        &file_op_results.read_time.to_string(),
+    ])?;
+    csv_writer.write_row(&[
+        "RAM Load Operation",
+        &file_op_results.ram_load_time.to_string(),
+    ])?;
+    csv_writer.write_row(&[
+        "Disk Hash Operation",
+        &file_op_results.disk_hash_time.to_string(),
+    ])?;
+    csv_writer.write_row(&[
+        "RAM Hash Operation",
+        &file_op_results.ram_hash_time.to_string(),
+    ])?;
     csv_writer.flush()?;
 
-    let total_file_time = file_op_results.write_time + file_op_results.read_time + 
-                         file_op_results.ram_load_time + file_op_results.disk_hash_time + 
-                         file_op_results.ram_hash_time;
+    let total_file_time = file_op_results.write_time
+        + file_op_results.read_time
+        + file_op_results.ram_load_time
+        + file_op_results.disk_hash_time
+        + file_op_results.ram_hash_time;
 
     let git_op_time = benchmark(|| async { git_ops.perform_operation() }).await?;
     println!("Writing Git Operation result...");
@@ -106,7 +125,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     csv_writer.flush()?;
 
     // Calculate average times
-    let total_time = total_file_time + git_op_time + docker_op_time + download_op_time + build_run_op_time;
+    let total_time =
+        total_file_time + git_op_time + docker_op_time + download_op_time + build_run_op_time;
     let average_time = total_time / 9; // Now counting all 5 file operations + 4 other operations
     println!("Writing Average Time result...");
     csv_writer.write_row(&["Average Time", &average_time.to_string()])?;
@@ -129,19 +149,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Average Time: {} ms", average_time);
 
     println!("Benchmarks completed. Moving results to runs directory...");
-    
+
     // Read config to get run names
     let config_str = fs::read_to_string("config.toml")?;
     let config: Value = toml::from_str(&config_str)
         .map_err(|e| Box::new(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
-    
-    let run_names = config.get("runs")
+
+    let run_names = config
+        .get("runs")
         .and_then(|r| r.get("names"))
         .and_then(|n| n.as_array())
         .ok_or_else(|| "Run names not found in config")?;
 
     // Convert run names to Vec<String> for dialog
-    let run_options: Vec<String> = run_names.iter()
+    let run_options: Vec<String> = run_names
+        .iter()
         .filter_map(|v| v.as_str())
         .map(String::from)
         .collect();
@@ -153,30 +175,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     print!("\nEnter selection (1-{}): ", run_options.len());
     std::io::Write::flush(&mut std::io::stdout())?;
-    
+
     let mut input = String::new();
     std::io::stdin().read_line(&mut input)?;
-    
-    let selection = input.trim().parse::<usize>()
+
+    let selection = input
+        .trim()
+        .parse::<usize>()
         .map_err(|_| "Invalid selection")?
         .checked_sub(1)
         .ok_or("Invalid selection")?;
-    
-    let run_name = run_options.get(selection)
-        .ok_or("Invalid selection")?;
+
+    let run_name = run_options.get(selection).ok_or("Invalid selection")?;
 
     // Move results file to runs directory with timestamp and run name
     let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
     let new_filename = format!("runs/{}_{}.csv", timestamp, run_name);
     fs::rename("artifacts/benchmark_results.csv", &new_filename)?;
-    
+
     // Cleanup
     println!("Cleaning up...");
     if Path::new("artifacts").exists() {
         fs::remove_dir_all("artifacts")?;
         println!("Artifacts directory cleaned up.");
     }
-    
+
     println!("Results written to {}", new_filename);
 
     // Calculate and update averages for this run type
@@ -197,20 +220,23 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
     for entry in fs::read_dir(runs_dir)? {
         let entry = entry?;
         let path = entry.path();
-        
-        if path.is_file() && 
-           path.extension().map_or(false, |ext| ext == "csv") &&
-           path.file_name().unwrap().to_string_lossy().contains(run_type) {
-            
+
+        if path.is_file()
+            && path.extension().map_or(false, |ext| ext == "csv")
+            && path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .contains(run_type)
+        {
             let content = fs::read_to_string(&path)?;
-            for line in content.lines().skip(1) { // Skip header
+            for line in content.lines().skip(1) {
+                // Skip header
                 let parts: Vec<&str> = line.split(',').collect();
                 if parts.len() == 2 {
                     let operation = parts[0].trim().to_string();
                     if let Ok(time) = parts[1].trim().parse::<f32>() {
-                        let (sum, count) = operation_totals
-                            .entry(operation)
-                            .or_insert((0.0, 0));
+                        let (sum, count) = operation_totals.entry(operation).or_insert((0.0, 0));
                         *sum += time;
                         *count += 1;
                     }
@@ -222,7 +248,7 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
     // Calculate averages and write to avg_<run_type>.csv
     let avg_file_path = format!("avg_{}.csv", run_type);
     let mut csv_writer = CsvWriter::new(&avg_file_path)?;
-    
+
     // Write header
     csv_writer.write_row(&["Operation", "Average Time (ms)"])?;
 
@@ -238,35 +264,43 @@ fn update_run_type_averages(run_type: &str) -> Result<(), Box<dyn std::error::Er
     csv_writer.write_row(&["TOTAL", &total_average.to_string()])?;
     csv_writer.flush()?;
     println!("Updated averages written to {}", avg_file_path);
-    
+
     Ok(())
 }
 
 // Function to generate a stacked bar chart for the benchmark results
-fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let avg_file_path = format!("avg_{}.csv", run_type);
-    let content = fs::read_to_string(&avg_file_path)?;
-    let mut operations: Vec<String> = Vec::new();
-    let mut times: Vec<f32> = Vec::new();
+use charts::{Chart, Color, ScaleBand, ScaleLinear, VerticalBarView};
 
-    // Skip header and read data
-    for line in content.lines().skip(1) {
-        let parts: Vec<&str> = line.split(',').collect();
-        if parts.len() == 2 {
-            let operation = parts[0].trim().to_string();
-            if let Ok(time) = parts[1].trim().parse::<f32>() {
-                // Skip the TOTAL row
-                if operation != "TOTAL" {
-                    operations.push(operation);
-                    times.push(time);
+fn generate_comparison_chart(run_types: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
+    let mut operations: Vec<String> = Vec::new();
+    let mut run_type_times: HashMap<String, Vec<f32>> = HashMap::new();
+
+    for &run_type in run_types {
+        let avg_file_path = format!("avg_{}.csv", run_type);
+        let content = fs::read_to_string(&avg_file_path)?;
+        let mut times: Vec<f32> = Vec::new();
+
+        // Skip header and read data
+        for line in content.lines().skip(1) {
+            let parts: Vec<&str> = line.split(',').collect();
+            if parts.len() == 2 {
+                let operation = parts[0].trim().to_string();
+                if let Ok(time) = parts[1].trim().parse::<f32>() {
+                    // Skip the TOTAL row
+                    if operation != "TOTAL" {
+                        if !operations.contains(&operation) {
+                            operations.push(operation.clone());
+                        }
+                        times.push(time);
+                    }
                 }
             }
         }
+        run_type_times.insert(run_type.to_string(), times);
     }
 
     // Create x and y values
     let x_values: Vec<f32> = (0..operations.len()).map(|i| i as f32).collect();
-    let y_values: Vec<f32> = times.iter().copied().collect();
 
     // Create scales for the chart
     let x = ScaleBand::new()
@@ -275,47 +309,69 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
         .set_inner_padding(0.1)
         .set_outer_padding(0.1);
 
+    let max_y_value = run_type_times
+        .values()
+        .flat_map(|v| v.iter())
+        .cloned()
+        .fold(0.0, f32::max);
     let y = ScaleLinear::new()
-        .set_domain(vec![0.0, *y_values.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap()])
+        .set_domain(vec![0.0, max_y_value])
         .set_range(vec![600 - 90 - 50, 0]);
 
     // Create the data vector
-    let data: Vec<(&str, f32)> = operations.iter()
-        .zip(y_values.iter())
-        .map(|(op, &val)| (op.as_str(), val))
-        .collect();
+    let mut data: Vec<(&str, Vec<f32>)> = Vec::new();
+    for (i, operation) in operations.iter().enumerate() {
+        let mut times: Vec<f32> = Vec::new();
+        for &run_type in run_types {
+            if let Some(run_times) = run_type_times.get(run_type) {
+                if let Some(&time) = run_times.get(i) {
+                    times.push(time);
+                } else {
+                    times.push(0.0);
+                }
+            }
+        }
+        data.push((operation.as_str(), times));
+    }
 
     // Create bar view
     let view = VerticalBarView::new()
         .set_x_scale(&x)
         .set_y_scale(&y)
+        .set_colors(vec![Color::new(0, 0, 255, 1.0), Color::new(255, 0, 0, 1.0)]) // Blue and Red colors for bars
         .load_data(&data)?;
 
     // Generate and save the chart
-    let chart_path = format!("runs/benchmark_chart_{}.svg", run_type);
+    let chart_path = "runs/benchmark_comparison_chart.svg";
     Chart::new()
         .set_width(800)
         .set_height(600)
         .set_margins(90, 40, 50, 60)
-        .add_title(format!("Benchmark Results - {}", run_type))
+        .set_background_color(Color::new(255, 255, 255, 1.0)) // White background
+        .add_title("Benchmark Results Comparison")
         .add_view(&view)
         .add_axis_bottom(&x)
         .add_axis_left(&y)
         .add_left_axis_label("Time (ms)")
         .add_bottom_axis_label("Operations")
         .save(&chart_path)?;
-    println!("Bar chart saved to {}", chart_path);
+    println!("Comparison bar chart saved to {}", chart_path);
 
     Ok(())
 }
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    async fn benchmark<F, Fut, T>(f: F) -> Result<u128, String>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = Result<T, String>>,
+    {
+        let start = Instant::now();
+        f().await?;
+        Ok(start.elapsed().as_millis())
+    }
 
-async fn benchmark<F, Fut, T>(f: F) -> Result<u128, String>
-where
-    F: FnOnce() -> Fut,
-    Fut: std::future::Future<Output = Result<T, String>>,
-{
-    let start = Instant::now();
-    f().await?;
-    Ok(start.elapsed().as_millis())
+    generate_comparison_chart(&["security_off", "security_on"])?;
+
+    Ok(())
 }
-
