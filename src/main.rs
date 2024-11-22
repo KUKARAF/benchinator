@@ -16,6 +16,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use chrono::Local;
 use toml::Value;
+use native_dialog::{MessageDialog, MessageType};
 
 fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
@@ -138,10 +139,41 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .and_then(|n| n.as_array())
         .ok_or_else(|| "Run names not found in config")?;
 
-    // Get first run name or use default
-    let run_name = run_names.get(0)
-        .and_then(|n| n.as_str())
-        .unwrap_or("default");
+    // Convert run names to Vec<String> for dialog
+    let run_options: Vec<String> = run_names.iter()
+        .filter_map(|v| v.as_str())
+        .map(String::from)
+        .collect();
+
+    // Show dialog with run options
+    let options_str = run_options.join("\n");
+    let msg = format!("Select a run type by entering its number:\n\n{}", 
+        run_options.iter().enumerate()
+            .map(|(i, name)| format!("{}. {}", i + 1, name))
+            .collect::<Vec<_>>()
+            .join("\n"));
+
+    MessageDialog::new()
+        .set_type(MessageType::Info)
+        .set_title("Select Run Type")
+        .set_text(&msg)
+        .show_alert()?;
+
+    // For now use terminal input since native-dialog doesn't have list selection
+    println!("\n{}", msg);
+    print!("\nEnter selection (1-{}): ", run_options.len());
+    std::io::Write::flush(&mut std::io::stdout())?;
+    
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+    
+    let selection = input.trim().parse::<usize>()
+        .map_err(|_| "Invalid selection")?
+        .checked_sub(1)
+        .ok_or("Invalid selection")?;
+    
+    let run_name = run_options.get(selection)
+        .ok_or("Invalid selection")?;
 
     // Move results file to runs directory with timestamp and run name
     let timestamp = Local::now().format("%Y%m%d_%H%M%S").to_string();
