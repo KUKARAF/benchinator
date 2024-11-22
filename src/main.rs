@@ -6,7 +6,7 @@ mod file_operations;
 mod git_operations;
 
 use build_run_operations::BuildRunOperations;
-use charts::{Chart, ScaleBand, ScaleLinear, VerticalBarView};
+use charts::{Chart, Color, ScaleBand, ScaleLinear, VerticalBarView};
 use chrono::Local;
 use csv_writer::CsvWriter;
 use docker_operations::DockerOperations;
@@ -51,6 +51,16 @@ fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+async fn benchmark<F, Fut, T>(f: F) -> Result<u128, String>
+where
+    F: FnOnce() -> Fut,
+    Fut: std::future::Future<Output = Result<T, String>>,
+{
+    let start = Instant::now();
+    f().await?;
+    Ok(start.elapsed().as_millis())
 }
 
 #[tokio::main]
@@ -297,17 +307,17 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
     }
 
     // Prepare data for chart
-    let mut chart_data: Vec<(&str, Vec<f32>)> = Vec::new();
+    let mut chart_data = Vec::new();
     for op in &operations {
-        let mut times = Vec::new();
-        for rt in &run_types {
-            if let Some(rt_times) = run_data.get(*rt) {
-                if let Some(time) = rt_times.get(operations.iter().position(|x| x == op).unwrap()) {
-                    times.push(*time);
-                }
+        if let (Some(off_times), Some(on_times)) = (run_data.get("security_off"), run_data.get("security_on")) {
+            if let (Some(&off_time), Some(&on_time)) = (
+                off_times.get(operations.iter().position(|x| x == op).unwrap()),
+                on_times.get(operations.iter().position(|x| x == op).unwrap())
+            ) {
+                chart_data.push((op.as_str(), off_time));
+                chart_data.push((op.as_str(), on_time));
             }
         }
-        chart_data.push((op, times));
     }
 
     // Create scales
