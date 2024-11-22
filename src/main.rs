@@ -16,7 +16,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use chrono::Local;
 use toml::Value;
-use native_dialog::{MessageDialog, MessageType};
 
 fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
