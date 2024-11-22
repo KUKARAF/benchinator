@@ -10,32 +10,60 @@ impl FileOperations {
         FileOperations
     }
 
-    pub fn perform_operation(&self) -> io::Result<()> {
+    pub struct FileOperationResults {
+        pub write_time: u128,
+        pub read_time: u128,
+        pub ram_load_time: u128,
+        pub disk_hash_time: u128,
+        pub ram_hash_time: u128,
+    }
+
+    pub fn perform_operation(&self) -> io::Result<FileOperationResults> {
         println!("Performing file operations...");
         
-        // Write 500MB random file
         let file_size = 500 * 1024 * 1024; // 500MB
         let temp_file = "temp_benchmark_file.bin";
+        
+        // Measure write operation
+        let write_start = std::time::Instant::now();
         self.write_random_file(temp_file, file_size)?;
+        let write_time = write_start.elapsed().as_millis();
+        println!("Write operation completed in {} ms", write_time);
 
-        // Read 500MB file
+        // Measure read operation
+        let read_start = std::time::Instant::now();
         self.read_file(temp_file)?;
+        let read_time = read_start.elapsed().as_millis();
+        println!("Read operation completed in {} ms", read_time);
 
-        // Load 500MB to RAM
+        // Measure RAM load operation
+        let ram_load_start = std::time::Instant::now();
         let data = self.load_to_ram(temp_file)?;
+        let ram_load_time = ram_load_start.elapsed().as_millis();
+        println!("RAM load operation completed in {} ms", ram_load_time);
 
-        // Calculate file hash from disk
+        // Measure disk hash calculation
+        let disk_hash_start = std::time::Instant::now();
         let disk_hash = self.calculate_file_hash(temp_file)?;
-        println!("File hash from disk: {}", disk_hash);
+        let disk_hash_time = disk_hash_start.elapsed().as_millis();
+        println!("File hash from disk: {} (completed in {} ms)", disk_hash, disk_hash_time);
 
-        // Calculate file hash from RAM
+        // Measure RAM hash calculation
+        let ram_hash_start = std::time::Instant::now();
         let ram_hash = self.calculate_ram_hash(&data);
-        println!("File hash from RAM: {}", ram_hash);
+        let ram_hash_time = ram_hash_start.elapsed().as_millis();
+        println!("File hash from RAM: {} (completed in {} ms)", ram_hash, ram_hash_time);
 
         // Clean up
         fs::remove_file(temp_file)?;
 
-        Ok(())
+        Ok(FileOperationResults {
+            write_time,
+            read_time,
+            ram_load_time,
+            disk_hash_time,
+            ram_hash_time,
+        })
     }
 
     fn write_random_file(&self, filename: &str, size: usize) -> io::Result<()> {
