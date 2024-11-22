@@ -82,6 +82,33 @@ names = ["security_off", "security_on"]
 - Run types allow for organizing test results into different categories (e.g., with/without security features)
 - Results are saved with timestamps and selected run type name for easy identification
 
+## How to Run
+
+1. Download the executable file
+2. Run the executable:
+```bash
+./system_benchmark
+```
+
+On first run, the tool will:
+- Create a default `config.toml` file if not present
+- Create necessary directories (artifacts, runs)
+- Run all benchmarks
+- Prompt you to select a run type
+- Save results to the `runs` directory
+
+### Configuration
+You can edit the `config.toml` file (created after first run) to customize:
+- Download URL and output filename
+- Number of git test files
+- Docker image and test commands
+- Run type names
+
+### Results
+- All benchmark results are saved in the `runs` directory
+- Files are named with timestamp and selected run type: `YYYYMMDD_HHMMSS_runtype.csv`
+- Each CSV file contains detailed timing for all operations
+
 ## Notes
 - The tool automatically creates required directories
 - Results are stored with timestamps
