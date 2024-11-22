@@ -58,10 +58,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     csv_writer.flush()?;
 
     // Implement benchmark tests and write results immediately
-    let file_op_time = benchmark(|| async { file_ops.perform_operation().map_err(|e| e.to_string()) }).await?;
-    println!("Writing File Operation result...");
-    csv_writer.write_row(&["File Operation", &file_op_time.to_string()])?;
+    let file_op_results = file_ops.perform_operation()?;
+    println!("Writing File Operation results...");
+    csv_writer.write_row(&["File Write Operation", &file_op_results.write_time.to_string()])?;
+    csv_writer.write_row(&["File Read Operation", &file_op_results.read_time.to_string()])?;
+    csv_writer.write_row(&["RAM Load Operation", &file_op_results.ram_load_time.to_string()])?;
+    csv_writer.write_row(&["Disk Hash Operation", &file_op_results.disk_hash_time.to_string()])?;
+    csv_writer.write_row(&["RAM Hash Operation", &file_op_results.ram_hash_time.to_string()])?;
     csv_writer.flush()?;
+
+    let total_file_time = file_op_results.write_time + file_op_results.read_time + 
+                         file_op_results.ram_load_time + file_op_results.disk_hash_time + 
+                         file_op_results.ram_hash_time;
 
     let git_op_time = benchmark(|| async { git_ops.perform_operation() }).await?;
     println!("Writing Git Operation result...");
@@ -85,8 +93,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     csv_writer.flush()?;
 
     // Calculate average times
-    let total_time = file_op_time + git_op_time + docker_op_time + download_op_time + build_run_op_time;
-    let average_time = total_time / 5;
+    let total_time = total_file_time + git_op_time + docker_op_time + download_op_time + build_run_op_time;
+    let average_time = total_time / 9; // Now counting all 5 file operations + 4 other operations
     println!("Writing Average Time result...");
     csv_writer.write_row(&["Average Time", &average_time.to_string()])?;
     csv_writer.flush()?;
@@ -95,7 +103,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     csv_writer.flush()?;
 
     // Print results to console
-    println!("File Operation: {} ms", file_op_time);
+    println!("File Operations:");
+    println!("  Write: {} ms", file_op_results.write_time);
+    println!("  Read: {} ms", file_op_results.read_time);
+    println!("  RAM Load: {} ms", file_op_results.ram_load_time);
+    println!("  Disk Hash: {} ms", file_op_results.disk_hash_time);
+    println!("  RAM Hash: {} ms", file_op_results.ram_hash_time);
     println!("Git Operation: {} ms", git_op_time);
     println!("Docker Operation: {} ms", docker_op_time);
     println!("Download Operation: {} ms", download_op_time);

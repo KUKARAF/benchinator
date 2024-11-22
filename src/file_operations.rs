@@ -18,7 +18,7 @@ impl FileOperations {
         FileOperations
     }
 
-    pub fn perform_operation(&self) -> io::Result<FileOperationResults> {
+    pub fn perform_operation(&self) -> Result<FileOperationResults, String> {
         println!("Performing file operations...");
         
         let file_size = 500 * 1024 * 1024; // 500MB
