@@ -1,7 +1,7 @@
 use reqwest;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 #[derive(Deserialize, Serialize)]
