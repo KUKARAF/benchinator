@@ -29,6 +29,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     csv_writer.write_row(&["Git Operation", &git_op_time.to_string()])?;
     csv_writer.write_row(&["Docker Operation", &docker_op_time.to_string()])?;
 
+    // Print results to console
+    println!("File Operation: {} ms", file_op_time);
+    println!("Git Operation: {} ms", git_op_time);
+    println!("Docker Operation: {} ms", docker_op_time);
+
     println!("Benchmarks completed. Results written to benchmark_results.csv");
     Ok(())
 }

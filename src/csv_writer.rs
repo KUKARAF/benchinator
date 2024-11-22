@@ -6,12 +6,14 @@ pub struct CsvWriter {
 }
 
 impl CsvWriter {
-    pub fn new(file_path: &str) -> Self {
-        CsvWriter {
-            file_path: file_path.to_string(),
-        }
+    pub fn new(file_path: &str) -> io::Result<Self> {
+        let file = File::create(file_path)?;
+        Ok(CsvWriter { file })
     }
 
-    // TODO: Implement methods for writing results to CSV
+    pub fn write_row(&mut self, data: &[&str]) -> io::Result<()> {
+        let row = data.join(",") + "\n";
+        self.file.write_all(row.as_bytes())
+    }
 }
 
