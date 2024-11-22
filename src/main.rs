@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use chrono::Local;
 use toml::Value;
-use rustplotlib::Figure;
+use rustplotlib::{Figure, plots::{Bar, Plot}};
 
 fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure config.toml exists
@@ -267,22 +267,21 @@ fn generate_bar_chart(run_type: &str) -> Result<(), Box<dyn std::error::Error>> 
     // Create the bar chart
     let mut figure = Figure::new();
     
-    // Add data points as vertical bars
-    let x_values: Vec<f64> = (0..operations.len()).map(|i| i as f64).collect();
-    let y_values: Vec<f64> = times.iter().copied().collect();
+    // Create bar plot
+    let mut plot = Plot::new();
+    let bar = Bar::new(x_values, y_values)
+        .label("Time (ms)")
+        .color("#3366cc");
+    plot.add(&bar);
     
-    figure.add_bars(&x_values, &y_values);
-    
-    // Add labels
+    // Add labels for operations
     for (i, op) in operations.iter().enumerate() {
-        figure.add_text(i as f64, 0.0, op);
+        plot.add_text(i as f64, 0.0, op.clone());
     }
 
     // Configure and save the chart
     let chart_path = format!("runs/benchmark_chart_{}.svg", run_type);
-    figure.set_size(800, 400);
-    figure.set_title("Benchmark Results");
-    figure.set_axis_labels("Operations", "Time (ms)");
+    figure.add_plot(&plot);
     figure.save(&chart_path)?;
     println!("Bar chart saved to {}", chart_path);
 
