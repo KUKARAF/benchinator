@@ -58,10 +58,5 @@ impl GitOperations {
         println!("{} files created and committed.", count);
         Ok(())
     }
-            return Err(String::from_utf8_lossy(&output.stderr).into_owned());
-        }
-
-        Ok(())
-    }
 }
 
