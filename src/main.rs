@@ -46,29 +46,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut csv_writer = CsvWriter::new("artifacts/benchmark_results.csv")?;
 
     // Write header to CSV
+    println!("Writing CSV header...");
     csv_writer.write_row(&["Operation", "Time (ms)"])?;
+    csv_writer.flush()?;
 
     // Implement benchmark tests and write results immediately
     let file_op_time = benchmark(|| async { file_ops.perform_operation().map_err(|e| e.to_string()) }).await?;
+    println!("Writing File Operation result...");
     csv_writer.write_row(&["File Operation", &file_op_time.to_string()])?;
+    csv_writer.flush()?;
 
     let git_op_time = benchmark(|| async { git_ops.perform_operation() }).await?;
+    println!("Writing Git Operation result...");
     csv_writer.write_row(&["Git Operation", &git_op_time.to_string()])?;
+    csv_writer.flush()?;
 
     docker_ops.perform_operation()?; // Docker system prune
     let docker_op_time = benchmark(|| async { docker_ops.perform_operation() }).await?;
+    println!("Writing Docker Operation result...");
     csv_writer.write_row(&["Docker Operation", &docker_op_time.to_string()])?;
+    csv_writer.flush()?;
 
     let download_op_time = benchmark(|| async { download_ops.perform_operation().await }).await?;
+    println!("Writing Download Operation result...");
     csv_writer.write_row(&["Download Operation", &download_op_time.to_string()])?;
+    csv_writer.flush()?;
 
     let build_run_op_time = benchmark(|| async { build_run_ops.perform_operation() }).await?;
+    println!("Writing Build and Run Operation result...");
     csv_writer.write_row(&["Build and Run Operation", &build_run_op_time.to_string()])?;
+    csv_writer.flush()?;
 
     // Calculate average times
     let total_time = file_op_time + git_op_time + docker_op_time + download_op_time + build_run_op_time;
     let average_time = total_time / 5;
+    println!("Writing Average Time result...");
     csv_writer.write_row(&["Average Time", &average_time.to_string()])?;
+    csv_writer.flush()?;
 
     // Ensure all data is written to the file
     csv_writer.flush()?;
