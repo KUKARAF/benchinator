@@ -8,6 +8,7 @@ cache:
   paths:
     - target/
     - cargo/
+    
 
 stages:
   - build
