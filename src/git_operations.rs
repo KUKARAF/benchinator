@@ -9,11 +9,58 @@ use toml;
 #[derive(Deserialize)]
 struct Config {
     git: GitConfig,
+    fn create_test_branch(&self) -> Result<(), String> {
+        Command::new("git")
+            .current_dir("artifacts")
+            .args(&["checkout", "-b", &self.config.git.test_branch_name])
+            .output()
+            .map_err(|e| format!("Failed to create test branch: {}", e))?;
+
+        println!("Created and switched to test branch '{}'", self.config.git.test_branch_name);
+        Ok(())
+    }
+
+    fn remove_random_files(&self, count: usize) -> Result<(), String> {
+        let files = fs::read_dir("artifacts")
+            .map_err(|e| format!("Failed to read artifacts directory: {}", e))?
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.path().extension().map_or(false, |ext| ext == "txt"))
+            .collect::<Vec<_>>();
+
+        let mut rng = rand::thread_rng();
+        let files_to_remove = files.choose_multiple(&mut rng, count).collect::<Vec<_>>();
+
+        for file in files_to_remove {
+            let filename = file.file_name();
+            let filename_str = filename.to_string_lossy();
+            
+            fs::remove_file(file.path())
+                .map_err(|e| format!("Failed to remove file '{}': {}", filename_str, e))?;
+
+            Command::new("git")
+                .current_dir("artifacts")
+                .args(&["rm", &filename_str])
+                .output()
+                .map_err(|e| format!("Failed to git rm file '{}': {}", filename_str, e))?;
+
+            Command::new("git")
+                .current_dir("artifacts")
+                .args(&["commit", "-m", &format!("Remove {}", filename_str)])
+                .output()
+                .map_err(|e| format!("Failed to commit removal of '{}': {}", filename_str, e))?;
+        }
+
+        println!("{} files randomly removed from the repository.", count);
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
 struct GitConfig {
     files_count: usize,
+    files_to_remove: usize,
+    files_to_add: usize,
+    test_branch_name: String,
 }
 
 pub struct GitOperations {
@@ -40,6 +87,15 @@ impl GitOperations {
 
         // Create and commit files based on config
         self.create_and_commit_files(self.config.git.files_count)?;
+
+        // Create and switch to test branch
+        self.create_test_branch()?;
+
+        // Remove random files
+        self.remove_random_files(self.config.git.files_to_remove)?;
+
+        // Add new files
+        self.create_and_commit_files(self.config.git.files_to_add)?;
 
         Ok(())
     }
