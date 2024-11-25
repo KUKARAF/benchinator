@@ -79,6 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let docker_ops = DockerOperations::new().map_err(|e| e.to_string())?;
     let download_ops = DownloadOperations::new().map_err(|e| e.to_string())?;
     let build_run_ops = BuildRunOperations::new();
+    let vscode_ops = VsCodeOperations::new();
     let mut csv_writer = CsvWriter::new("artifacts/benchmark_results.csv")?;
 
     // Write header to CSV
@@ -138,10 +139,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     csv_writer.write_row(&["Build and Run Operation", &build_run_op_time.to_string()])?;
     csv_writer.flush()?;
 
+    let vscode_op_time = benchmark(|| async { vscode_ops.open_branches() }).await?;
+    println!("Writing VS Code Operation result...");
+    csv_writer.write_row(&["VS Code Operation", &vscode_op_time.to_string()])?;
+    csv_writer.flush()?;
+
     // Calculate average times
     let total_time =
-        total_file_time + git_op_time + docker_op_time + download_op_time + build_run_op_time;
-    let average_time = total_time / 9; // Now counting all 5 file operations + 4 other operations
+        total_file_time + git_op_time + docker_op_time + download_op_time + build_run_op_time + vscode_op_time;
+    let average_time = total_time / 10; // Now counting all 5 file operations + 5 other operations
     println!("Writing Average Time result...");
     csv_writer.write_row(&["Average Time", &average_time.to_string()])?;
     csv_writer.flush()?;
@@ -160,6 +166,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Docker Operation: {} ms", docker_op_time);
     println!("Download Operation: {} ms", download_op_time);
     println!("Build and Run Operation: {} ms", build_run_op_time);
+    println!("VS Code Operation: {} ms", vscode_op_time);
     println!("Average Time: {} ms", average_time);
 
     println!("Benchmarks completed. Moving results to runs directory...");
