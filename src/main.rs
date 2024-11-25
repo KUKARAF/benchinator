@@ -14,6 +14,7 @@ use docker_operations::DockerOperations;
 use download_operations::DownloadOperations;
 use file_operations::FileOperations;
 use git_operations::GitOperations;
+use vscode::VsCodeOperations;
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;

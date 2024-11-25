@@ -3,6 +3,7 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
 use rand::Rng;
+use rand::seq::SliceRandom;
 use serde::Deserialize;
 use toml;
 
