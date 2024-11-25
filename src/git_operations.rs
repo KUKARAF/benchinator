@@ -9,22 +9,9 @@ use toml;
 #[derive(Deserialize)]
 struct Config {
     git: GitConfig,
-    fn create_test_branch(&self) -> Result<(), String> {
-        // Use the first feature branch from the config
-        let branch_name = self.config.git.branches.iter()
-            .find(|b| b.starts_with("feature/"))
-            .ok_or_else(|| "No feature branch found in config".to_string())?;
+}
 
-        Command::new("git")
-            .current_dir("artifacts")
-            .args(&["checkout", "-b", branch_name])
-            .output()
-            .map_err(|e| format!("Failed to create test branch: {}", e))?;
-
-        println!("Created and switched to feature branch '{}'", branch_name);
-        Ok(())
-    }
-
+impl GitOperations {
     fn remove_random_files(&self, count: usize) -> Result<(), String> {
         let files = fs::read_dir("artifacts")
             .map_err(|e| format!("Failed to read artifacts directory: {}", e))?
@@ -93,7 +80,7 @@ impl GitOperations {
         // Create and commit files based on config
         self.create_and_commit_files(self.config.git.files_count)?;
 
-        // Create and switch to test branch
+        // Create and switch to feature branch
         self.create_test_branch()?;
 
         // Remove random files
@@ -120,6 +107,22 @@ impl GitOperations {
             .map_err(|e| format!("Failed to initialize git repository: {}", e))?;
 
         println!("Git repository initialized in artifacts directory.");
+        Ok(())
+    }
+
+    fn create_test_branch(&self) -> Result<(), String> {
+        // Use the first feature branch from the config
+        let branch_name = self.config.git.branches.iter()
+            .find(|b| b.starts_with("feature/"))
+            .ok_or_else(|| "No feature branch found in config".to_string())?;
+
+        Command::new("git")
+            .current_dir("artifacts")
+            .args(&["checkout", "-b", branch_name])
+            .output()
+            .map_err(|e| format!("Failed to create test branch: {}", e))?;
+
+        println!("Created and switched to feature branch '{}'", branch_name);
         Ok(())
     }
 
