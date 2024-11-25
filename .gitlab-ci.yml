@@ -4,11 +4,15 @@ variables:
   CARGO_HOME: $CI_PROJECT_DIR/cargo
   CARGO_TERM_COLOR: always
 
+before_script:
+  - apt-get update
+  - apt-get install -y mingw-w64
+  - rustup target add x86_64-pc-windows-gnu
+
 cache:
   paths:
     - target/
     - cargo/
-    
 
 stages:
   - build
@@ -28,16 +32,13 @@ build-linux:
 
 build-windows:
   stage: build
-  tags:
-    - windows
   script:
     - rustc --version
-    - cargo build --release
+    - cargo build --release --target x86_64-pc-windows-gnu
   artifacts:
     paths:
-      - target/release/system_benchmark.exe
+      - target/x86_64-pc-windows-gnu/release/system_benchmark.exe
     expire_in: 1 week
   only:
     - main
     - merge_requests
-    
