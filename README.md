@@ -62,7 +62,7 @@ files_count = 50
 #### Docker Settings
 ```toml
 [docker]
-image = "af2.corpo.t-mobile.pl/cindy-base-images/python:3.9.7-slim-buster"
+image = "python:3.9.7-slim-buster"
 test_command = ["python", "--version"]
 ```
 - `image`: Docker image to use for container tests
