@@ -10,13 +10,18 @@ use toml;
 struct Config {
     git: GitConfig,
     fn create_test_branch(&self) -> Result<(), String> {
+        // Use the first feature branch from the config
+        let branch_name = self.config.git.branches.iter()
+            .find(|b| b.starts_with("feature/"))
+            .ok_or_else(|| "No feature branch found in config".to_string())?;
+
         Command::new("git")
             .current_dir("artifacts")
-            .args(&["checkout", "-b", &self.config.git.test_branch_name])
+            .args(&["checkout", "-b", branch_name])
             .output()
             .map_err(|e| format!("Failed to create test branch: {}", e))?;
 
-        println!("Created and switched to test branch '{}'", self.config.git.test_branch_name);
+        println!("Created and switched to feature branch '{}'", branch_name);
         Ok(())
     }
 
@@ -60,7 +65,7 @@ struct GitConfig {
     files_count: usize,
     files_to_remove: usize,
     files_to_add: usize,
-    test_branch_name: String,
+    branches: Vec<String>,
 }
 
 pub struct GitOperations {

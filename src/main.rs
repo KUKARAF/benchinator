@@ -33,7 +33,6 @@ fn ensure_config_and_directories() -> Result<(), Box<dyn std::error::Error>> {
             files_count = 50\n\
             files_to_remove = 5\n\
             files_to_add = 10\n\
-            test_branch_name = \"test-branch\"\n\
             branches = [\"main\", \"develop\", \"feature/auth\", \"feature/api\"]\n\
             \n\
             [docker]\n\
