@@ -4,6 +4,7 @@ mod docker_operations;
 mod download_operations;
 mod file_operations;
 mod git_operations;
+mod vscode;
 
 use build_run_operations::BuildRunOperations;
 use charts::{Chart, Color, ScaleBand, ScaleLinear, VerticalBarView};
