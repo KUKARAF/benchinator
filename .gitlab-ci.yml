@@ -27,6 +27,7 @@ build-linux:
     expire_in: 1 week
   only:
     - main
+    - master
     - merge_requests
 
 build-windows:
@@ -40,4 +41,5 @@ build-windows:
     expire_in: 1 week
   only:
     - main
+    - master
     - merge_requests
