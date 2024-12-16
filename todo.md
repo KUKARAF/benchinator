@@ -1,0 +1,6 @@
+- test vscode
+	- run java project? jdusza 
+		- install java on test device? jdusza
+	- intellij? jdusza
+	- vs code?  jdusza
+- test working laptop with or without cybersecurity Michalczuk Rafał
