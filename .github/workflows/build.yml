@@ -51,30 +51,32 @@ jobs:
         retention-days: 7
         if-no-files-found: error
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Get Release URL
+      id: get_release
+      uses: actions/github-script@v6
       with:
-        tag_name: release-${{ needs.get-date.outputs.date }}-${{ github.sha }}
-        release_name: Release ${{ github.ref_name }} ${{ needs.get-date.outputs.date }}
-        draft: false
-        prerelease: false
+        script: |
+          const release = await github.rest.repos.getReleaseByTag({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag: `release-${{ needs.get-date.outputs.date }}-${{ github.sha }}`
+          });
+          return release.data.upload_url;
+        result-encoding: string
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        upload_url: ${{ steps.get_release.outputs.result }}
         asset_path: target/release/benchinator
         asset_name: benchinator
         asset_content_type: application/octet-stream
 
 
   build-windows:
-    needs: get-date
+    needs: [get-date, build-linux]
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
