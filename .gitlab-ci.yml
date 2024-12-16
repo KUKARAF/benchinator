@@ -23,7 +23,7 @@ build-linux:
     - cargo build --release
   artifacts:
     paths:
-      - target/release/system_benchmark
+      - target/release/letbuildirtplee
     expire_in: 1 week
   only:
     - main
@@ -37,7 +37,7 @@ build-windows:
     - cargo build --release --target x86_64-pc-windows-gnu
   artifacts:
     paths:
-      - target/x86_64-pc-windows-gnu/release/system_benchmark.exe
+      - target/x86_64-pc-windows-gnu/release/letbuildirtplee.exe
     expire_in: 1 week
   only:
     - main
