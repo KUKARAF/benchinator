@@ -8,7 +8,16 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  get-date:
+    runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.date.outputs.date }}
+    steps:
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
   build-linux:
+    needs: get-date
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -39,8 +48,30 @@ jobs:
         retention-days: 7
         if-no-files-found: error
 
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: release-${{ needs.get-date.outputs.date }}-${{ github.sha }}
+        release_name: Release ${{ github.ref_name }} ${{ needs.get-date.outputs.date }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: target/release/benchmarker
+        asset_name: benchmarker-linux-${{ needs.get-date.outputs.date }}
+        asset_content_type: application/octet-stream
+
 
   build-windows:
+    needs: get-date
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
@@ -70,4 +101,25 @@ jobs:
         path: target/release/benchmarker.exe
         retention-days: 7
         if-no-files-found: error
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: release-${{ needs.get-date.outputs.date }}-${{ github.sha }}
+        release_name: Release ${{ github.ref_name }} ${{ needs.get-date.outputs.date }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: target/release/benchmarker.exe
+        asset_name: benchmarker-windows-${{ needs.get-date.outputs.date }}.exe
+        asset_content_type: application/octet-stream
 
