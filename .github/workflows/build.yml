@@ -51,55 +51,9 @@ jobs:
         retention-days: 7
         if-no-files-found: error
 
-  create-release:
-    needs: [get-date, build-linux, build-windows]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: release-${{ needs.get-date.outputs.date }}-${{ github.sha }}
-          release_name: Release ${{ github.ref_name }} ${{ needs.get-date.outputs.date }}
-          draft: false
-          prerelease: false
-          
-      - name: Download Linux Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: benchinator-linux
-          path: ./linux
-          
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: benchinator-windows
-          path: ./windows
-
-      - name: Upload Linux Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./linux/benchinator
-          asset_name: benchinator-linux
-          asset_content_type: application/octet-stream
-
-      - name: Upload Windows Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./windows/benchinator.exe
-          asset_name: benchinator-windows.exe
-          asset_content_type: application/octet-stream
 
   build-windows:
-    needs: [get-date]
+    needs: get-date
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
